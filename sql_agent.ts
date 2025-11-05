@@ -1,12 +1,12 @@
 // Sql agent
 import "dotenv/config";
 import process from 'node:process';
-import { createAgent, tool } from "langchain";
+
 import { ChatAnthropic } from "@langchain/anthropic";
-import { DataSource } from "typeorm";
-import { SqlDatabase } from "@langchain/classic/sql_db";
 import { MemorySaver } from "@langchain/langgraph";
-import { z } from "zod";
+import { createAgent } from "langchain";
+
+import executeSQL from "./tools/execute-sql.ts";
 
 const key = process.env.ANTHROPIC_API_KEY;
 if (key === undefined) {
@@ -18,45 +18,13 @@ if (key === undefined) {
  * Model
  * - Uses your Anthropic key from .env if needed
  */
-const llm = new ChatAnthropic({ model: "claude-sonnet-4-5-20250929" });
+const model = new ChatAnthropic({ model: "claude-sonnet-4-5-20250929" });
 
 /**
- * Database
- * - Make sure ./Chinook.db exists (you already have it in this repo)
- * - TypeORM DataSource + SqlDatabase (matches L1/L6 patterns)
+ * Tools
+ * - Imported from the /tools folder
  */
-const datasource = new DataSource({
-  type: "sqlite",
-  database: "./Chinook.db",
-});
-const db = await SqlDatabase.fromDataSourceParams({ appDataSource: datasource });
-
-/**
- * Schema (included in the prompt to ground the model)
- */
-// const SCHEMA = await db.getTableInfo();
-
-
-/**
- * Tool (function-first signature; matches LangChain umbrella API)
- * - No runtime context required; closes over `db`
- */
-export const execute_sql = tool(
-  async ({ query }: { query: string }) => {
-    try {
-      return await db.run(query);
-    // deno-lint-ignore no-explicit-any
-    } catch (e: any) {
-      return `Error: ${e?.message ?? String(e)}`;
-    }
-  },
-  {
-    name: "execute_sql",
-    description: "Execute a READ-ONLY SQLite SELECT query and return results.",
-    schema: z.object({ query: z.string() }),
-  }
-);
-
+const tools = [executeSQL];
 
 /**
  * System prompt (includes schema + rules)
@@ -84,8 +52,8 @@ const checkpointer = new MemorySaver();
  * Agent (default export for langgraph.json "<file>:default")
  */
 const agent = createAgent({
-  model: llm,
-  tools: [execute_sql],
+  model,
+  tools,
   systemPrompt: SYSTEM_PROMPT,
   checkpointer,
 });
