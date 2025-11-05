@@ -5,8 +5,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "lg-server": "npx @langchain/langgraph-cli dev",
-    "dev": "npx tsx agent.ts"
+    "dev": "npx @langchain/langgraph-cli dev"
   },
   "dependencies": {
     "@langchain/anthropic": "^1.0.0-alpha.2",

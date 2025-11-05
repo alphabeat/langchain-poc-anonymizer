@@ -3,7 +3,8 @@
     "."
   ],
   "graphs": {
-    "default": "sql_agent2.ts:default"
+    "default": "sql_agent.ts:default",
+    "weather": "weather_agent.ts:default"
   },
   "env": ".env"
 }
