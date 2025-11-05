@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "."
+  ],
+  "graphs": {
+    "default": "sql_agent2.ts:default"
+  },
+  "env": ".env"
+}
