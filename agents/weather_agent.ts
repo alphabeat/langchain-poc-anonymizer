@@ -5,7 +5,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { createAgent } from "langchain";
 import { MemorySaver } from "@langchain/langgraph";
 
-import getWeather from "./tools/get-weather.ts";
+import { getWeather } from "../tools/index.ts";
 
 const key = process.env.ANTHROPIC_API_KEY;
 if (key === undefined) {

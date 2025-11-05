@@ -6,7 +6,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { MemorySaver } from "@langchain/langgraph";
 import { createAgent } from "langchain";
 
-import executeSQL from "./tools/execute-sql.ts";
+import { executeSQL } from "../tools/index.ts";
 
 const key = process.env.ANTHROPIC_API_KEY;
 if (key === undefined) {
