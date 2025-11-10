@@ -14,7 +14,7 @@
     "@langchain/langgraph": "^1.0.1",
     "better-sqlite3": "^12.4.1",
     "dotenv": "^17.2.3",
-    "langchain": "^1.0.0-alpha.9",
+    "langchain": "^1.0.3",
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.27",
     "zod": "^4.1.12"
