@@ -10,7 +10,7 @@ import { z } from "zod";
  */
 const datasource = new DataSource({
   type: "sqlite",
-  database: "../Chinook.db",
+  database: "./Chinook.db",
 });
 
 const db = await SqlDatabase.fromDataSourceParams({ appDataSource: datasource });
