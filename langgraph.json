@@ -3,9 +3,7 @@
     "."
   ],
   "graphs": {
-    "SQL Agent": "agents/sql_agent.ts:default",
-    "Weather": "agents/weather_agent.ts:default",
-    "Anonymizer": "agents/anonymize_agent.ts:default"
+    "DPO Workflow": "agents/dpo_agent.ts:default"
   },
   "env": ".env"
 }
