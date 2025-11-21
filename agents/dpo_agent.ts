@@ -15,13 +15,15 @@ const RedactionMapType = z.object({
   ),
 });
 
-const AgentState = z.object({
+const DPOAgentStateDefinition = z.object({
   userPrompt: z.string(),
   documentSummary: z.string(),
   redactionMap: RedactionMapType,
   redactedText: z.string(),
   restoredText: z.string(),
 });
+
+export type DPOAgentState = z.infer<typeof DPOAgentStateDefinition>;
 
 const llmModel = new ChatAnthropic({
   model: 'claude-sonnet-4-5',
@@ -33,7 +35,7 @@ const slmModel = new ChatAnthropic({
   temperature: 0,
 });
 
-const detectPII = async (state: z.infer<typeof AgentState>) => {
+const detectPII = async (state: DPOAgentState) => {
   const systemPrompt = `
     ## Role and Goal
       You are an expert data-privacy analyzer specialized in detecting and classifying Personally Identifiable Information (PII).
@@ -89,7 +91,7 @@ const detectPII = async (state: z.infer<typeof AgentState>) => {
   };
 }
 
-const removePII = (state: z.infer<typeof AgentState>) => {
+const removePII = (state: DPOAgentState) => {
   const { redactionMap, userPrompt } = state;
 
   if (!redactionMap.piiFound) {
@@ -112,7 +114,7 @@ const removePII = (state: z.infer<typeof AgentState>) => {
   };
 }
 
-const summarize = async (state: z.infer<typeof AgentState>) => {
+const summarize = async (state: DPOAgentState) => {
   const systemPrompt = `
     You are a helpful assistant.
     Provide a comprehensive summary of the given text.
@@ -136,7 +138,7 @@ const summarize = async (state: z.infer<typeof AgentState>) => {
   };
 }
 
-const restorePII = (state: z.infer<typeof AgentState>) => {
+const restorePII = (state: DPOAgentState) => {
   const { redactionMap, documentSummary } = state;
 
   if (!redactionMap.piiFound) {
@@ -159,7 +161,7 @@ const restorePII = (state: z.infer<typeof AgentState>) => {
   };
 }
 
-const agent = new StateGraph(AgentState)
+const agent = new StateGraph(DPOAgentStateDefinition)
   .addNode("detectPII", detectPII)
   .addNode("removePII", removePII)
   .addNode("summarize", summarize)
