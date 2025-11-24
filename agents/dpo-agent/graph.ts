@@ -1,9 +1,11 @@
 import { ChatAnthropic } from "@langchain/anthropic";
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { StateGraph, START, END } from "@langchain/langgraph";
 import { AIMessage, HumanMessage, SystemMessage } from "langchain";
 
 import { DETECT_PII_SYSTEM_PROMPT, SUMMARIZE_SYSTEM_PROMPT } from "./prompts.ts";
 import { DPOAgentState, DPOAgentStateDefinition, RedactionMapType } from "./state.ts";
+import { b64ToBlob } from "./utils/b64ToBlob.ts";
 
 const llmModel = new ChatAnthropic({
   model: 'claude-sonnet-4-5',
@@ -15,6 +17,49 @@ const slmModel = new ChatAnthropic({
   temperature: 0,
 });
 
+const extractFile = async (state: DPOAgentState) => {
+  const { messages } = state;
+
+  const lastMessage = messages[messages.length - 1];
+
+  if (typeof lastMessage.content === 'string') {
+    return {};
+  }
+
+  const fileMessage = lastMessage.content.find((block) => block.type === 'file');
+
+  if (!fileMessage) {
+    return {};
+  }
+
+  let content = '';
+
+  if (fileMessage.mimeType === 'application/pdf') {
+    const blob = b64ToBlob(fileMessage.data as string, 'application/pdf');
+    const loader = new PDFLoader(blob);
+    const doc = await loader.load();
+
+    content = doc[0].pageContent;
+  }
+
+  return {
+    messages: messages.map((msg) => {
+      if (msg.id !== lastMessage.id) return msg;
+
+      return {
+        ...msg,
+        content: [
+          ...msg.content,
+          {
+            type: 'text',
+            text: content,
+          },
+        ],
+      }
+    })
+  }
+}
+
 const detectPII = async (state: DPOAgentState) => {
   const { messages } = state;
 
@@ -24,7 +69,12 @@ const detectPII = async (state: DPOAgentState) => {
     .withStructuredOutput(RedactionMapType)
     .invoke([
       new SystemMessage(DETECT_PII_SYSTEM_PROMPT),
-      lastMessage,
+      {
+        ...lastMessage,
+        content: typeof lastMessage.content === 'string'
+          ? lastMessage.content
+          : lastMessage.content.filter((block) => block.type === 'text'),
+      },
     ]);
 
   return {
@@ -38,7 +88,10 @@ const removePII = (state: DPOAgentState) => {
   const lastMessage = messages[messages.length - 1];
   let content = typeof lastMessage.content === 'string'
     ? lastMessage.content
-    : lastMessage.content.map((block) => block.text).join(' ');
+    : lastMessage.content
+        .filter((block) => block.type === 'text')
+        .map((block) => block.text)
+        .join("\n\n");
 
   if (!redactionMap.piiFound) {
     return {
@@ -49,7 +102,7 @@ const removePII = (state: DPOAgentState) => {
   const { items } = redactionMap;
 
   items.forEach((item) => {
-    const regExp = new RegExp(item.value, 'ig');
+    const regExp = new RegExp(RegExp.escape(item.value), 'ig');
 
     content = content.replaceAll(regExp, item.replacement);
   });
@@ -86,7 +139,7 @@ const restorePII = (state: DPOAgentState) => {
   let restoredText = documentSummary;
 
   items.forEach((item) => {
-    const regExp = new RegExp(item.replacement, 'ig');
+    const regExp = new RegExp(RegExp.escape(item.replacement), 'ig');
 
     restoredText = restoredText.replaceAll(regExp, item.value);
   });
@@ -100,11 +153,13 @@ const restorePII = (state: DPOAgentState) => {
 }
 
 export const builder = new StateGraph(DPOAgentStateDefinition)
+  .addNode("extractFile", extractFile)
   .addNode("detectPII", detectPII)
   .addNode("removePII", removePII)
   .addNode("summarize", summarize)
   .addNode("restorePII", restorePII)
-  .addEdge(START, "detectPII")
+  .addEdge(START, "extractFile")
+  .addEdge("extractFile", "detectPII")
   .addEdge("detectPII", "removePII")
   .addEdge("removePII", "summarize")
   .addEdge("summarize", "restorePII")
