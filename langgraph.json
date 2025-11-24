@@ -3,7 +3,7 @@
     "."
   ],
   "graphs": {
-    "DPO Workflow": "agents/dpo_agent.ts:default"
+    "dpo-workflow": "agents/dpo-agent/graph.ts:graph"
   },
   "env": ".env"
 }
