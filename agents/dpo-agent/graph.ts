@@ -35,14 +35,16 @@ const detectPII = async (state: DPOAgentState) => {
 const removePII = (state: DPOAgentState) => {
   const { redactionMap, messages } = state;
 
-  if (!redactionMap.piiFound) {
-    return state;
-  }
-
   const lastMessage = messages[messages.length - 1];
   let content = typeof lastMessage.content === 'string'
     ? lastMessage.content
-    : lastMessage.content.join(' ');
+    : lastMessage.content.map((block) => block.text).join(' ');
+
+  if (!redactionMap.piiFound) {
+    return {
+      redactedText: content,
+    };
+  }
 
   const { items } = redactionMap;
 
