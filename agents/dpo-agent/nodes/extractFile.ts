@@ -22,7 +22,9 @@ const extractFile = async (state: DPOAgentState) => {
 
   if (fileMessage.mimeType === 'application/pdf') {
     const blob = b64ToBlob(fileMessage.data as string, 'application/pdf');
-    const loader = new PDFLoader(blob);
+    const loader = new PDFLoader(blob, {
+      splitPages: true,
+    });
     const pages = await loader.load();
 
     content = pages.map((page) => page.pageContent).join("\n\n");
