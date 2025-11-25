@@ -194,3 +194,5 @@ Thumbs.db
 
 # LangGraph API
 .langgraph_api
+
+samples/
