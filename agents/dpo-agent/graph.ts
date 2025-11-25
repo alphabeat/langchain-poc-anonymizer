@@ -1,4 +1,4 @@
-import { StateGraph, START, END } from "@langchain/langgraph";
+import { StateGraph, START, END, MemorySaver } from "@langchain/langgraph";
 
 import {
   detectPII,
@@ -22,5 +22,7 @@ export const builder = new StateGraph(DPOAgentStateDefinition)
   .addEdge("summarize", "restorePII")
   .addEdge("restorePII", END);
 
-export const graph = builder.compile();
+const checkpointer = new MemorySaver();
+
+export const graph = builder.compile({ checkpointer });
 graph.name = "DPOAgent";
