@@ -5,7 +5,7 @@ import { DETECT_PII_SYSTEM_PROMPT } from "../prompts.ts";
 import { DPOAgentState, RedactionMapType } from "../state.ts";
 
 const detectPII = async (state: DPOAgentState) => {
-  const { document, messages } = state;
+  const { document, messages, redactionMap } = state;
 
   const lastMessage = messages[messages.length - 1];
 
@@ -25,14 +25,32 @@ const detectPII = async (state: DPOAgentState) => {
     new HumanMessage({ content: userRequestContent }),
   ];
 
-  const redactionMap = await slmModel
+  if (redactionMap) {
+    return {
+      userRequestContent,
+    };
+  }
+
+  try {
+    const result = await slmModel
     .withStructuredOutput(RedactionMapType)
     .invoke(slmMessages);
 
   return {
-    redactionMap,
+    redactionMap: result,
     userRequestContent,
   };
+  } catch {
+    console.error('Failed to detect PII');
+
+    return {
+      redactionMap: {
+        piiFound: false,
+        items: [],
+      },
+      userRequestContent,
+    }
+  }
 }
 
 export default detectPII;
