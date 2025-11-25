@@ -1,19 +1,13 @@
 import { DPOAgentState } from "../state.ts";
 
 const removePII = (state: DPOAgentState) => {
-  const { redactionMap, messages } = state;
+  const { redactionMap, userRequestContent } = state;
 
-  const lastMessage = messages[messages.length - 1];
-  let content = typeof lastMessage.content === 'string'
-    ? lastMessage.content
-    : lastMessage.content
-        .filter((block) => block.type === 'text')
-        .map((block) => block.text)
-        .join("\n\n");
+  let content = userRequestContent;
 
   if (!redactionMap.piiFound) {
     return {
-      redactedText: content,
+      redactedUserRequest: content,
     };
   }
 
@@ -26,7 +20,7 @@ const removePII = (state: DPOAgentState) => {
   });
 
   return {
-    redactedText: content,
+    redactedUserRequest: content,
   };
 }
 

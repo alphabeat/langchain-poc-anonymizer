@@ -20,9 +20,11 @@ export const DPOAgentStateDefinition = z.object({
   messages: z.array(z.custom<BaseMessage>()).register(registry, schemaMetaRegistry.getChannelsForSchema(
     z.object({ messages: z.array(z.custom<BaseMessage>())})
   )),
+  document: z.string(),
   documentSummary: z.string(),
   redactionMap: RedactionMapType,
-  redactedText: z.string(),
+  redactedUserRequest: z.string(),
+  userRequestContent: z.string(),
 });
 
 export type DPOAgentState = z.infer<typeof DPOAgentStateDefinition>;

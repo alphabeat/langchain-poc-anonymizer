@@ -5,16 +5,15 @@ import { SUMMARIZE_SYSTEM_PROMPT } from "../prompts.ts";
 import { DPOAgentState } from "../state.ts";
 
 const summarize = async (state: DPOAgentState) => {
-  const { redactedText } = state;
+  const { redactedUserRequest } = state;
 
   const summary = await llmModel
     .invoke([
       new SystemMessage(SUMMARIZE_SYSTEM_PROMPT),
-      new HumanMessage(redactedText),
+      new HumanMessage(redactedUserRequest),
     ]);
 
   return {
-    ...state,
     documentSummary: summary.text,
   };
 }

@@ -6,7 +6,9 @@ const restorePII = (state: DPOAgentState) => {
   const { redactionMap, documentSummary, messages } = state;
 
   if (!redactionMap.piiFound) {
-    return state;
+    return {
+      messages: [...messages, new AIMessage(documentSummary)],
+    };
   }
 
   const { items } = redactionMap;
@@ -19,11 +21,8 @@ const restorePII = (state: DPOAgentState) => {
     restoredText = restoredText.replaceAll(regExp, item.value);
   });
 
-  const newMessage = new AIMessage(restoredText);
-
   return {
-    ...state,
-    messages: [...messages, newMessage],
+    messages: [...messages, new AIMessage(restoredText)],
   };
 }
 

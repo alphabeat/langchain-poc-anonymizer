@@ -23,26 +23,13 @@ const extractFile = async (state: DPOAgentState) => {
   if (fileMessage.mimeType === 'application/pdf') {
     const blob = b64ToBlob(fileMessage.data as string, 'application/pdf');
     const loader = new PDFLoader(blob);
-    const doc = await loader.load();
+    const pages = await loader.load();
 
-    content = doc[0].pageContent;
+    content = pages.map((page) => page.pageContent).join("\n\n");
   }
 
   return {
-    messages: messages.map((msg) => {
-      if (msg.id !== lastMessage.id) return msg;
-
-      return {
-        ...msg,
-        content: [
-          ...msg.content,
-          {
-            type: 'text',
-            text: content,
-          },
-        ],
-      }
-    })
+    document: content,
   }
 }
 
